@@ -36,8 +36,8 @@ function Forum() {
         <div className="bg-base-100 rounded-lg shadow-cl w-full max-w-6xl h-[calc(100vh-8rem)]">
           <div className="flex h-full rounded-lg overflow-hidden">
 
-            {/* Main Content Area */}
-            <main className="flex-1 p-8">
+            {/* Main Content Area with Scrollable Container */}
+            <main className="flex-1 p-8 overflow-y-auto">
 
               {/* Post Creation Form */}
               <section className="bg-white p-6 rounded-lg shadow-lg mb-8">
@@ -75,8 +75,8 @@ function Forum() {
                 </form>
               </section>
 
-              {/* List of Posts with Scrollable Container */}
-              <section className="space-y-8 overflow-y-auto max-h-[calc(100vh-20rem)]">
+              {/* List of Posts */}
+              <section className="space-y-8">
                 {posts.map((post, index) => (
                   <article key={index} className="bg-white p-6 rounded-lg shadow-lg">
                     <div className="flex justify-between items-center mb-4">
