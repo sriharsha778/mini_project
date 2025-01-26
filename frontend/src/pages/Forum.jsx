@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useAuthStore } from "../store/useAuthStore";
 
 function Forum() {
+  const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
   const [postTitle, setPostTitle] = useState('');
   const [postContent, setPostContent] = useState('');
   const [fileInput, setFileInput] = useState(null);
@@ -33,7 +35,7 @@ function Forum() {
       <div className="flex items-center justify-center pt-20 px-4">
         <div className="bg-base-100 rounded-lg shadow-cl w-full max-w-6xl h-[calc(100vh-8rem)]">
           <div className="flex h-full rounded-lg overflow-hidden">
-            
+
             {/* Main Content Area */}
             <main className="flex-1 p-8">
 
@@ -73,12 +75,12 @@ function Forum() {
                 </form>
               </section>
 
-              {/* List of Posts */}
-              <section className="space-y-8">
+              {/* List of Posts with Scrollable Container */}
+              <section className="space-y-8 overflow-y-auto max-h-[calc(100vh-20rem)]">
                 {posts.map((post, index) => (
                   <article key={index} className="bg-white p-6 rounded-lg shadow-lg">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold">User {index + 1}</h3>
+                      <h3 className="text-xl font-semibold">{authUser?.fullName}</h3>
                       <span className="text-gray-500 text-sm">Posted on: {new Date().toLocaleDateString()}</span>
                     </div>
                     <p className="text-gray-700 mb-4">{post.text}</p>
