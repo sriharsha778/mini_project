@@ -1,12 +1,10 @@
-// Change from require to import
-import express from 'express';
-import multer from 'multer';
-import cors from 'cors';
-import path from 'path';
-import cloudinary from 'cloudinary';
-import streamifier from 'streamifier';
-import mongoose from 'mongoose';
-
+const express = require('express');
+const multer = require('multer');
+const cors = require('cors');
+const path = require('path');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+const mongoose = require('mongoose');
 
 // MongoDB Setup (replace with your MongoDB Atlas URI)
 mongoose.connect('mongodb+srv://snehithkama:ahX4y2Ujr7DDFfyG@app123.urwno.mongodb.net/socialconnect?retryWrites=true&w=majority')
@@ -28,7 +26,7 @@ const postSchema = new mongoose.Schema({
 const Post = mongoose.model('Post', postSchema);
 
 const app = express();
-app.use(cors({ origin: true }));  // Allow frontend access
+app.use(cors({ origin: 'http://localhost:3000' }));  // Allow frontend access
 
 // Multer setup for handling file uploads in memory
 const storage = multer.memoryStorage();  // Use memory storage to upload to Cloudinary
