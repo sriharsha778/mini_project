@@ -1,0 +1,21 @@
+{
+  "name": "chat-app",
+  "version": "1.0.0",
+  "description": "It is a chating web app to use it download required package deploy frontend and backend using `npm run dev` and run server using node server.js",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "npm run start --prefix backend"
+  },
+  "keywords": [],
+  "author": "Sri harsha, Snehith, Hemanth Rao",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sriharsha778/mini_project.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sriharsha778/mini_project/issues"
+  },
+  "homepage": "https://github.com/sriharsha778/mini_project#readme"
+}
