@@ -1,105 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import { io } from "socket.io-client";
+
+const socket = io("http://192.168.1.4:5000", {
+  query: { userId: "some-unique-id" }, // Send userId for tracking
+});
 
 function Forum() {
-  const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
-  const [postTitle, setPostTitle] = useState('');
-  const [postContent, setPostContent] = useState('');
-  const [fileInput, setFileInput] = useState(null);
+  const { authUser } = useAuthStore();
+  const [postContent, setPostContent] = useState("");
   const [posts, setPosts] = useState([]);
 
-  const handleFileChange = (e) => {
-    setFileInput(e.target.files[0]); // Get the selected file
-  };
+  // ✅ Fetch posts on page load
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch("http://192.168.1.4:5000/api/forum/posts");
+        if (!response.ok) throw new Error("Failed to fetch posts");
+        const data = await response.json();
+        setPosts(data);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
+    };
 
-  const handlePostSubmit = (e) => {
+    fetchPosts();
+
+    // ✅ Listen for real-time forum posts
+    socket.on("newPost", (newPost) => {
+      setPosts((prevPosts) => [newPost, ...prevPosts]); // Update state
+    });
+
+    return () => {
+      socket.off("newPost"); // Cleanup on unmount
+    };
+  }, []);
+
+  // ✅ Handle post submission
+  const handlePostSubmit = async (e) => {
     e.preventDefault();
-    if (!postContent && !fileInput) {
-      alert("Please add text or a file (photo/video) before submitting!");
-      return;
+    if (!postContent.trim()) return alert("Please enter a message!");
+
+    const newPost = {
+      text: postContent,
+      author: authUser?.fullName || "Anonymous",
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const response = await fetch("http://192.168.1.4:5000/api/forum/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPost),
+      });
+
+      if (!response.ok) throw new Error("Failed to send post");
+
+      const savedPost = await response.json();
+      socket.emit("sendForumMessage", savedPost); // ✅ Send post via WebSocket
+      setPosts((prev) => [savedPost, ...prev]); // Immediate update for sender
+      setPostContent("");
+    } catch (error) {
+      console.error("Error submitting post:", error);
+      alert("Failed to submit post!");
     }
-
-    const formData = new FormData();
-    formData.append('text', postContent);
-    if (fileInput) formData.append('file', fileInput);
-
-    // Simulate post submission here (you can send this to your server)
-    setPosts([{ text: postContent, file: fileInput ? URL.createObjectURL(fileInput) : null }, ...posts]);
-
-    setPostContent('');
-    setFileInput(null);
   };
 
   return (
-    <div className="h-screen bg-base-200">
-      <div className="flex items-center justify-center pt-20 px-4">
-        <div className="bg-base-100 rounded-lg shadow-cl w-full max-w-6xl h-[calc(100vh-8rem)]">
-          <div className="flex h-full rounded-lg overflow-hidden">
+    <div className="flex flex-col h-screen bg-base-200">
+      <div className="bg-base-300 py-4 px-6 shadow-md">
+        <h2 className="text-xl font-semibold text-white">Community Forum</h2>
+      </div>
 
-            {/* Main Content Area with Scrollable Container */}
-            <main className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center p-6 overflow-auto">
+        <div className="w-full max-w-2xl bg-base-100 p-4 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold text-primary">Create a Post</h3>
+          <form onSubmit={handlePostSubmit} className="mt-2">
+            <textarea
+              className="w-full p-2 border rounded-md bg-base-200 text-base-content"
+              rows="3"
+              placeholder="What's on your mind?"
+              value={postContent}
+              onChange={(e) => setPostContent(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="w-full bg-primary text-white py-2 rounded-lg mt-2 hover:bg-primary-focus"
+            >
+              Post
+            </button>
+          </form>
+        </div>
 
-              {/* Post Creation Form */}
-              <section className="bg-white p-6 rounded-lg shadow-lg mb-8">
-                <h2 className="text-2xl font-semibold mb-4">Create a New Post</h2>
-                <form onSubmit={handlePostSubmit}>
-                  <div className="mb-4">
-                    <textarea
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      rows="5"
-                      placeholder="What's on your mind?"
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-4 mb-4">
-                    {/* Upload Image/Icon */}
-                    <label htmlFor="file_upload" className="cursor-pointer">
-                      <span className="text-blue-600 hover:text-blue-800">Add Image/Video</span>
-                    </label>
-                    <input
-                      type="file"
-                      id="file_upload"
-                      accept="image/*, video/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    {fileInput && <span className="text-gray-500">{fileInput.name}</span>}
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-                  >
-                    Post
-                  </button>
-                </form>
-              </section>
-
-              {/* List of Posts */}
-              <section className="space-y-8">
-                {posts.map((post, index) => (
-                  <article key={index} className="bg-white p-6 rounded-lg shadow-lg">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold">{authUser?.fullName}</h3>
-                      <span className="text-gray-500 text-sm">Posted on: {new Date().toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-gray-700 mb-4">{post.text}</p>
-                    {post.file && (
-                      <div className="w-full">
-                        <img src={post.file} alt="Post content" className="w-full rounded-md" />
-                      </div>
-                    )}
-                    <div className="flex justify-between text-gray-500 text-sm mt-4">
-                      <button className="hover:text-blue-600">Like</button>
-                      <button className="hover:text-blue-600">Comment</button>
-                      <button className="hover:text-blue-600">Share</button>
-                    </div>
-                  </article>
-                ))}
-              </section>
-            </main>
-
-          </div>
+        <div className="w-full max-w-2xl mt-6 space-y-4">
+          {posts.length === 0 ? (
+            <p className="text-center text-gray-500">No posts yet. Be the first to share!</p>
+          ) : (
+            [...new Map(posts.map((post) => [post._id, post])).values()].map((post) => (
+              <div key={post._id} className="bg-base-100 p-4 rounded-lg shadow-md">
+            
+                <h3 className="text-md font-semibold text-secondary">{post.author}</h3>
+                <span className="text-xs text-gray-400">
+                  {new Date(post.createdAt).toLocaleString()}
+                </span>
+                <p className="text-base-content mt-2">{post.text}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

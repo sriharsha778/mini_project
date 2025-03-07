@@ -4,8 +4,9 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 const BASE_URL = import.meta.env.MODE === "development" 
-  ? `http://${window.location.hostname}:5001`  // Uses local network IP
+  ? `http://${window.location.hostname}:5000`  // Uses local network IP
   : "/";
+  
 
 
 export const useAuthStore = create((set, get) => ({
