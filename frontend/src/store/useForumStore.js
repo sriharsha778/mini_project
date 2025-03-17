@@ -1,5 +1,8 @@
 import { create } from "zustand";
 
+// Dynamically determine API URL based on hostname
+const API_URL = `http://${window.location.hostname}:5000`;
+
 export const useForumStore = create((set) => ({
   posts: [],
   isLoading: false,
@@ -8,7 +11,7 @@ export const useForumStore = create((set) => ({
   fetchPosts: async () => {
     set({ isLoading: true });
     try {
-      const response = await fetch("http://192.168.1.4:5000/api/forum/posts");
+      const response = await fetch(`${API_URL}/api/forum/posts`);
       if (!response.ok) throw new Error("Failed to fetch posts");
       const data = await response.json();
       set({ posts: data, isLoading: false });

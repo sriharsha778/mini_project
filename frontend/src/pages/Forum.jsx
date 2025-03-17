@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { io } from "socket.io-client";
 
-const socket = io("http://192.168.1.4:5000", {
-  query: { userId: "some-unique-id" }, // Send userId for tracking
+// Dynamically determine API URL based on the hostname
+const API_URL = `http://${window.location.hostname}:5000`;
+
+const socket = io(API_URL, {
+  query: { userId: "some-unique-id" },
 });
 
 function Forum() {
@@ -11,11 +14,10 @@ function Forum() {
   const [postContent, setPostContent] = useState("");
   const [posts, setPosts] = useState([]);
 
-  // ✅ Fetch posts on page load
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch("http://192.168.1.4:5000/api/forum/posts");
+        const response = await fetch(`${API_URL}/api/forum/posts`);
         if (!response.ok) throw new Error("Failed to fetch posts");
         const data = await response.json();
         setPosts(data);
@@ -26,17 +28,15 @@ function Forum() {
 
     fetchPosts();
 
-    // ✅ Listen for real-time forum posts
     socket.on("newPost", (newPost) => {
-      setPosts((prevPosts) => [newPost, ...prevPosts]); // Update state
+      setPosts((prevPosts) => [newPost, ...prevPosts]);
     });
 
     return () => {
-      socket.off("newPost"); // Cleanup on unmount
+      socket.off("newPost");
     };
   }, []);
 
-  // ✅ Handle post submission
   const handlePostSubmit = async (e) => {
     e.preventDefault();
     if (!postContent.trim()) return alert("Please enter a message!");
@@ -48,7 +48,7 @@ function Forum() {
     };
 
     try {
-      const response = await fetch("http://192.168.1.4:5000/api/forum/post", {
+      const response = await fetch(`${API_URL}/api/forum/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newPost),
@@ -57,8 +57,8 @@ function Forum() {
       if (!response.ok) throw new Error("Failed to send post");
 
       const savedPost = await response.json();
-      socket.emit("sendForumMessage", savedPost); // ✅ Send post via WebSocket
-      setPosts((prev) => [savedPost, ...prev]); // Immediate update for sender
+      socket.emit("sendForumMessage", savedPost);
+      setPosts((prev) => [savedPost, ...prev]);
       setPostContent("");
     } catch (error) {
       console.error("Error submitting post:", error);
@@ -98,7 +98,6 @@ function Forum() {
           ) : (
             [...new Map(posts.map((post) => [post._id, post])).values()].map((post) => (
               <div key={post._id} className="bg-base-100 p-4 rounded-lg shadow-md">
-            
                 <h3 className="text-md font-semibold text-secondary">{post.author}</h3>
                 <span className="text-xs text-gray-400">
                   {new Date(post.createdAt).toLocaleString()}
